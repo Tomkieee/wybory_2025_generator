@@ -1,0 +1,97 @@
+<div style="font-family: Arial, sans-serif; background-color: #f0f2f5; padding: 20px; text-align: center;">
+  <h1 style="color: #333;">Generator Losowego Wyniku Wyborów</h1>
+
+  <label>Temperatura (°C): <input type="number" id="temp" required></label><br>
+  <label>Ciśnienie (hPa): <input type="number" id="pressure" required></label><br>
+  <label>Wilgotność (%): <input type="number" id="humidity" required></label><br>
+  <label>Prędkość wiatru (km/h): <input type="number" id="wind" required></label><br>
+  <label>Godzina wschodu słońca (hh:mm): <input type="time" id="sunrise" required></label><br>
+  <label>Godzina zachodu słońca (hh:mm): <input type="time" id="sunset" required></label><br>
+  <label>Opady deszczu: 
+    <select id="rain">
+      <option value="true">Tak</option>
+      <option value="false">Nie</option>
+    </select>
+  </label><br>
+
+  <button onclick="wylosujKandydata()" style="margin-top: 20px; padding: 10px 20px; font-size: 1.2em; background-color: #4CAF50; color: white; border: none; border-radius: 8px; cursor: pointer;">Wylosuj kandydata</button>
+
+  <h2 id="wynik" style="margin-top: 30px; font-size: 1.5em; color: #222; min-height: 2em;"></h2>
+
+  <a class="github-link" href="https://github.com/Tomkieee/wybory_2025_generator/tree/main" target="_blank" style="margin-top: 40px; display: inline-flex; align-items: center; text-decoration: none; background-color: #24292e; color: white; padding: 10px 15px; border-radius: 8px; font-size: 1.2em;">
+    <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" alt="GitHub Logo" style="width: 24px; height: 24px; margin-right: 10px;">
+    Zobacz kod na GitHub
+  </a>
+</div>
+
+<script>
+const kandydaci = [
+  { nazwisko: "BARTOSZEWICZ Artur", wiek: 51, miasto: "Warszawa", wyksztalcenie: "wyższe" },
+  { nazwisko: "BIEJAT Magdalena Agnieszka", wiek: 43, miasto: "Warszawa", wyksztalcenie: "wyższe" },
+  { nazwisko: "BRAUN Grzegorz Michał", wiek: 58, miasto: "Rzeszów", wyksztalcenie: "wyższe" },
+  { nazwisko: "HOŁOWNIA Szymon Franciszek", wiek: 48, miasto: "Otwock", wyksztalcenie: "średnie" },
+  { nazwisko: "JAKUBIAK Marek", wiek: 66, miasto: "Warszawa", wyksztalcenie: "średnie" },
+  { nazwisko: "MACIAK Maciej", wiek: 54, miasto: "Włocławek", wyksztalcenie: "średnie" },
+  { nazwisko: "MENTZEN Sławomir Jerzy", wiek: 38, miasto: "Toruń", wyksztalcenie: "wyższe" },
+  { nazwisko: "NAWROCKI Karol Tadeusz", wiek: 42, miasto: "Gdańsk", wyksztalcenie: "wyższe" },
+  { nazwisko: "SENYSZYN Joanna", wiek: 76, miasto: "Warszawa", wyksztalcenie: "wyższe" },
+  { nazwisko: "STANOWSKI Krzysztof Jakub", wiek: 42, miasto: "Wilcza Góra", wyksztalcenie: "średnie" },
+  { nazwisko: "TRZASKOWSKI Rafał Kazimierz", wiek: 53, miasto: "Warszawa", wyksztalcenie: "wyższe" },
+  { nazwisko: "WOCH Marek Marian", wiek: 46, miasto: "Kąkolewnica", wyksztalcenie: "wyższe" },
+  { nazwisko: "ZANDBERG Adrian Tadeusz", wiek: 45, miasto: "Warszawa", wyksztalcenie: "wyższe" }
+];
+
+function wylosujKandydata() {
+  const temperatura = parseFloat(document.getElementById("temp").value);
+  const cisnienie = parseFloat(document.getElementById("pressure").value);
+  const wilgotnosc = parseFloat(document.getElementById("humidity").value);
+  const wiatr = parseFloat(document.getElementById("wind").value);
+  const wschod = document.getElementById("sunrise").value;
+  const zachod = document.getElementById("sunset").value;
+  const opady = document.getElementById("rain").value === "true";
+
+  let wagi = kandydaci.map(k => {
+    let waga = 1.0;
+
+    if (temperatura > 24 && k.wiek < 50) waga *= 1.5;
+    else if (temperatura < 15 && k.wiek > 50) waga *= 1.5;
+
+    if (cisnienie < 1010 && k.wyksztalcenie === "średnie") waga *= 1.5;
+    else if (cisnienie >= 1010 && k.wyksztalcenie === "wyższe") waga *= 1.5;
+
+    if (opady && k.miasto === "Warszawa") waga *= 1.5;
+
+    if (wilgotnosc > 80 && k.wiek > 50) waga *= 1.3;
+    if (wiatr > 30 && k.wiek < 50) waga *= 1.3;
+
+    if (wschod < "05:00" && k.miasto === "Warszawa") waga *= 1.2;
+    if (zachod > "20:00" && k.wyksztalcenie === "wyższe") waga *= 1.2;
+
+    return waga;
+  });
+
+  const sumaWag = wagi.reduce((a, b) => a + b, 0);
+  let los = Math.random() * sumaWag;
+
+  let wybranyKandydat = null;
+  for (let i = 0; i < kandydaci.length; i++) {
+    if (los < wagi[i]) {
+      wybranyKandydat = kandydaci[i].nazwisko;
+      break;
+    }
+    los -= wagi[i];
+  }
+
+  const wynikElem = document.getElementById("wynik");
+  let iteracje = 20;
+  let interval = setInterval(() => {
+    const losowyKandydat = kandydaci[Math.floor(Math.random() * kandydaci.length)].nazwisko;
+    wynikElem.innerText = `Losowanie: ${losowyKandydat}`;
+    iteracje--;
+    if (iteracje === 0) {
+      clearInterval(interval);
+      wynikElem.innerText = `Zwycięzca: ${wybranyKandydat}`;
+    }
+  }, 100);
+}
+</script>
